@@ -79,6 +79,7 @@ namespace HyTaLauncher
             NicknameTextBox.Text = settings.Nickname;
             BranchComboBox.SelectedIndex = settings.VersionIndex;
             _localization.LoadLanguage(settings.Language);
+            _gameLauncher.UseMirror = settings.UseMirror;
         }
 
         private void SaveSettings()
@@ -308,6 +309,10 @@ namespace HyTaLauncher
             var settingsWindow = new SettingsWindow(_settings, _localization);
             settingsWindow.Owner = this;
             settingsWindow.ShowDialog();
+            
+            // Обновляем настройку зеркала после закрытия окна настроек
+            var settings = _settings.Load();
+            _gameLauncher.UseMirror = settings.UseMirror;
         }
 
         private void Mods_Click(object sender, MouseButtonEventArgs e)

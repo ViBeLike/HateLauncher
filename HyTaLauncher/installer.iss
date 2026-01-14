@@ -2,7 +2,7 @@
 ; Compile with Inno Setup 6.x
 
 #define MyAppName "HyTaLauncher"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "HyTaLauncher"
 #define MyAppURL "https://github.com/HyTaLauncher"
 #define MyAppExeName "HyTaLauncher.exe"

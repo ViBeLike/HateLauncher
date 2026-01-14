@@ -310,7 +310,7 @@
                     Padding="20,12">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock x:Name="FooterText"
-                               Text="HyTaLauncher v1.0.0 • Unofficial launcher"
+                               Text="HyTaLauncher v1.0.2 • Unofficial launcher"
                                FontSize="10"
                                Foreground="{StaticResource TextSecondaryBrush}"
                                HorizontalAlignment="Center"

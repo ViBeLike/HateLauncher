@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Настройки"
-        Height="350" Width="450"
+        Height="420" Width="450"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -72,12 +72,13 @@
                     </Grid>
 
                     <!-- Info -->
-                    <Border Background="{StaticResource CardBackgroundBrush}"
+                    <!-- <Border Background="{StaticResource CardBackgroundBrush}"
                             CornerRadius="6"
-                            Padding="12">
+                            Padding="12"
+                            Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock x:Name="InfoText"
-                                       Text="HyTaLauncher v1.0.0"
+                                       Text="HyTaLauncher v1.0.2"
                                        FontSize="11"
                                        Foreground="{StaticResource TextBrush}"/>
                             <TextBlock x:Name="InfoDescText"
@@ -86,7 +87,57 @@
                                        Foreground="{StaticResource TextSecondaryBrush}"
                                        Margin="0,4,0,0"/>
                         </StackPanel>
-                    </Border>
+                    </Border> -->
+
+                    <!-- Mirror Setting -->
+                    <TextBlock x:Name="MirrorLabel"
+                               Text="DOWNLOAD MIRROR"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,0,0,6"/>
+                    <CheckBox x:Name="UseMirrorCheckBox"
+                              Foreground="{StaticResource TextBrush}"
+                              FontSize="11"
+                              Margin="0,0,0,6"
+                              Checked="UseMirrorCheckBox_Changed"
+                              Unchecked="UseMirrorCheckBox_Changed">
+                        <TextBlock x:Name="UseMirrorText" 
+                                   Text="Use mirror server"
+                                   TextWrapping="Wrap"/>
+                    </CheckBox>
+                    <TextBlock x:Name="MirrorWarningText"
+                               Text="Only use if official server doesn't work. Speed limited to ~2 MB/s"
+                               FontSize="9"
+                               Foreground="#ff9800"
+                               TextWrapping="Wrap"
+                               Visibility="Collapsed"
+                               Margin="20,0,0,15"/>
+
+                    <!-- Russifier -->
+                    <TextBlock x:Name="RussifierLabel"
+                               Text="RUSSIFIER"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,0,0,6"/>
+                    <Button x:Name="RussifierBtn"
+                            Style="{StaticResource ModernButton}"
+                            Background="{StaticResource CardBackgroundBrush}"
+                            Padding="12,8"
+                            FontSize="11"
+                            HorizontalAlignment="Left"
+                            Click="RussifierButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🇷🇺" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="RussifierBtnText" Text="Install Russifier"/>
+                        </StackPanel>
+                    </Button>
+                    <TextBlock x:Name="RussifierStatusText"
+                               Text=""
+                               FontSize="9"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,6,0,0"/>
 
                 </StackPanel>
             </ScrollViewer>

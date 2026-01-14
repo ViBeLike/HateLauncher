@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -9,12 +10,14 @@ namespace HyTaLauncher.Services
         public int VersionIndex { get; set; } = 0;
         public string GameDirectory { get; set; } = "";
         public int MemoryMb { get; set; } = 4096;
-        public string Language { get; set; } = "en";
+        public string Language { get; set; } = ""; // Пустая строка = определить по системе
+        public bool UseMirror { get; set; } = false; // Использовать зеркало для скачивания
     }
 
     public class SettingsManager
     {
         private readonly string _settingsPath;
+        private readonly string _langDir;
 
         public SettingsManager()
         {
@@ -24,6 +27,7 @@ namespace HyTaLauncher.Services
             );
             Directory.CreateDirectory(appDir);
             _settingsPath = Path.Combine(appDir, "settings.json");
+            _langDir = Path.Combine(appDir, "languages");
         }
 
         public LauncherSettings Load()
@@ -33,14 +37,45 @@ namespace HyTaLauncher.Services
                 if (File.Exists(_settingsPath))
                 {
                     var json = File.ReadAllText(_settingsPath);
-                    return JsonConvert.DeserializeObject<LauncherSettings>(json) ?? new LauncherSettings();
+                    var settings = JsonConvert.DeserializeObject<LauncherSettings>(json) ?? new LauncherSettings();
+                    
+                    // Если язык не задан - определяем по системе
+                    if (string.IsNullOrEmpty(settings.Language))
+                    {
+                        settings.Language = GetSystemLanguage();
+                    }
+                    
+                    return settings;
                 }
             }
             catch
             {
                 // Return default settings on error
             }
-            return new LauncherSettings();
+            
+            var defaultSettings = new LauncherSettings();
+            defaultSettings.Language = GetSystemLanguage();
+            return defaultSettings;
+        }
+
+        private string GetSystemLanguage()
+        {
+            var langCode = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
+            
+            // Проверяем, есть ли такой язык
+            if (Directory.Exists(_langDir))
+            {
+                var langFile = Path.Combine(_langDir, $"{langCode}.json");
+                if (File.Exists(langFile))
+                {
+                    return langCode;
+                }
+            }
+            
+            // Поддерживаемые языки
+            if (langCode == "ru") return "ru";
+            
+            return "en";
         }
 
         public void Save(LauncherSettings settings)

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
@@ -35,11 +36,41 @@ namespace HyTaLauncher.Services
         
         // Кэш всех найденных PWR файлов: branch -> (prevVer, targetVer) -> exists
         private Dictionary<string, HashSet<(int prev, int target)>> _pwrCache = new();
+        
+        // Отдельный клиент для быстрых проверок
+        private readonly HttpClient _quickClient;
+        
+        // URL зеркала для скачивания
+        private const string OFFICIAL_BASE_URL = "https://game-patches.hytale.com/patches/windows/amd64";
+        private const string MIRROR_BASE_URL = "http://93.189.231.137/patches/windows/amd64";
+        
+        // Использовать зеркало
+        public bool UseMirror { get; set; } = false;
+        
+        private string GetPatchBaseUrl() => UseMirror ? MIRROR_BASE_URL : OFFICIAL_BASE_URL;
 
         public GameLauncher()
         {
-            _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(5);
+            // Включаем поддержку TLS 1.2 и 1.3 для старых систем
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+            
+            var handler = new HttpClientHandler
+            {
+                // Разрешаем автоматическую декомпрессию
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
+            
+            _httpClient = new HttpClient(handler);
+            _httpClient.Timeout = TimeSpan.FromMinutes(30); // Увеличиваем таймаут для больших файлов
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "HytaleLauncher/1.0");
+            
+            // Быстрый клиент для HEAD запросов
+            _quickClient = new HttpClient(new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            });
+            _quickClient.Timeout = TimeSpan.FromSeconds(5);
+            _quickClient.DefaultRequestHeaders.Add("User-Agent", "HytaleLauncher/1.0");
             
             var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             _launcherDir = Path.Combine(roaming, "HyTaLauncher");
@@ -65,12 +96,12 @@ namespace HyTaLauncher.Services
             // Ищем полные версии (0/X.pwr) пока не будет 5 подряд отсутствующих
             while (consecutiveMisses < ConsecutiveMissesToStop)
             {
-                var url = $"https://game-patches.hytale.com/patches/windows/amd64/{branch}/0/{ver}.pwr";
+                var url = $"{GetPatchBaseUrl()}/{branch}/0/{ver}.pwr";
                 
                 try
                 {
                     using var request = new HttpRequestMessage(HttpMethod.Head, url);
-                    using var response = await _httpClient.SendAsync(request);
+                    using var response = await _quickClient.SendAsync(request);
                     
                     if (response.IsSuccessStatusCode)
                     {
@@ -100,12 +131,12 @@ namespace HyTaLauncher.Services
                 
                 while (consecutiveMisses < ConsecutiveMissesToStop && targetVer <= maxVersion + ConsecutiveMissesToStop)
                 {
-                    var url = $"https://game-patches.hytale.com/patches/windows/amd64/{branch}/{prevVer}/{targetVer}.pwr";
+                    var url = $"{GetPatchBaseUrl()}/{branch}/{prevVer}/{targetVer}.pwr";
                     
                     try
                     {
                         using var request = new HttpRequestMessage(HttpMethod.Head, url);
-                        using var response = await _httpClient.SendAsync(request);
+                        using var response = await _quickClient.SendAsync(request);
                         
                         if (response.IsSuccessStatusCode)
                         {
@@ -309,7 +340,7 @@ namespace HyTaLauncher.Services
             {
                 var pwrFile = $"{targetVer}.pwr";
                 var pwrPath = Path.Combine(cacheDir, $"{version.Branch}_{prevVer}_{pwrFile}");
-                var pwrUrl = $"https://game-patches.hytale.com/patches/windows/amd64/{version.Branch}/{prevVer}/{pwrFile}";
+                var pwrUrl = $"{GetPatchBaseUrl()}/{version.Branch}/{prevVer}/{pwrFile}";
 
                 if (prevVer == 0)
                 {
@@ -320,9 +351,56 @@ namespace HyTaLauncher.Services
                     StatusChanged?.Invoke(string.Format(localization.Get("status.downloading_patch"), prevVer, targetVer));
                 }
 
-                if (!File.Exists(pwrPath))
+                // Проверяем размер файла на сервере
+                long expectedSize = 0;
+                try
                 {
-                    await DownloadFileAsync(pwrUrl, pwrPath);
+                    using var headRequest = new HttpRequestMessage(HttpMethod.Head, pwrUrl);
+                    using var headResponse = await _quickClient.SendAsync(headRequest);
+                    if (headResponse.IsSuccessStatusCode)
+                    {
+                        expectedSize = headResponse.Content.Headers.ContentLength ?? 0;
+                    }
+                }
+                catch { }
+
+                // Проверяем существующий файл
+                bool needsDownload = true;
+                if (File.Exists(pwrPath) && expectedSize > 0)
+                {
+                    var fileInfo = new FileInfo(pwrPath);
+                    if (fileInfo.Length == expectedSize)
+                    {
+                        needsDownload = false;
+                        StatusChanged?.Invoke(localization.Get("status.pwr_cached"));
+                    }
+                    else
+                    {
+                        // Файл неполный — удаляем и качаем заново
+                        StatusChanged?.Invoke(localization.Get("status.redownloading"));
+                        File.Delete(pwrPath);
+                    }
+                }
+                else if (File.Exists(pwrPath) && expectedSize == 0)
+                {
+                    // Не смогли получить размер — используем существующий файл
+                    needsDownload = false;
+                }
+
+                if (needsDownload)
+                {
+                    await DownloadFileAsync(pwrUrl, pwrPath, expectedSize);
+                    
+                    // Проверяем размер после скачивания
+                    if (expectedSize > 0)
+                    {
+                        var downloadedSize = new FileInfo(pwrPath).Length;
+                        if (downloadedSize != expectedSize)
+                        {
+                            File.Delete(pwrPath);
+                            throw new Exception($"Download incomplete: {downloadedSize}/{expectedSize} bytes");
+                        }
+                    }
                 }
 
                 StatusChanged?.Invoke(localization.Get("status.applying_patch"));
@@ -375,19 +453,53 @@ namespace HyTaLauncher.Services
             return path;
         }
 
-        private async Task DownloadFileAsync(string url, string destPath)
+        private async Task DownloadFileAsync(string url, string destPath, long expectedSize = -1)
         {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            var tempPath = destPath + ".tmp";
+            long existingBytes = 0;
+            
+            // Проверяем есть ли частично скачанный файл
+            if (File.Exists(tempPath))
+            {
+                existingBytes = new FileInfo(tempPath).Length;
+            }
+
+            // Создаём запрос с поддержкой докачки
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            
+            if (existingBytes > 0)
+            {
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(existingBytes, null);
+                StatusChanged?.Invoke($"Resuming download from {existingBytes / 1024 / 1024}MB...");
+            }
+
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            
+            // Если сервер не поддерживает Range или файл изменился — качаем заново
+            if (existingBytes > 0 && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
+            {
+                existingBytes = 0;
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+            
             response.EnsureSuccessStatusCode();
 
-            var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            var downloadedBytes = 0L;
+            var contentLength = response.Content.Headers.ContentLength ?? -1;
+            var totalBytes = existingBytes + contentLength;
+            
+            if (expectedSize > 0)
+            {
+                totalBytes = expectedSize;
+            }
 
             await using var contentStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await using var fileStream = new FileStream(tempPath, 
+                existingBytes > 0 ? FileMode.Append : FileMode.Create, 
+                FileAccess.Write, FileShare.None);
 
             var buffer = new byte[81920];
             int bytesRead;
+            var downloadedBytes = existingBytes;
 
             while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
             {
@@ -400,6 +512,14 @@ namespace HyTaLauncher.Services
                     ProgressChanged?.Invoke(progress);
                 }
             }
+            
+            // Закрываем поток перед переименованием
+            await fileStream.FlushAsync();
+            fileStream.Close();
+            
+            // Переименовываем .tmp в финальный файл
+            if (File.Exists(destPath)) File.Delete(destPath);
+            File.Move(tempPath, destPath);
         }
 
         private async Task ExtractArchiveAsync(string archivePath, string destDir)
@@ -443,42 +563,77 @@ namespace HyTaLauncher.Services
         {
             var butlerPath = await EnsureButlerAsync(localization);
 
+            // Проверяем существование файлов
+            if (!File.Exists(pwrPath))
+            {
+                throw new FileNotFoundException($"PWR file not found: {pwrPath}");
+            }
+            
+            if (!File.Exists(butlerPath))
+            {
+                throw new FileNotFoundException($"Butler not found: {butlerPath}");
+            }
+
             var stagingDir = Path.Combine(gameDir, "staging-temp");
             Directory.CreateDirectory(stagingDir);
+            Directory.CreateDirectory(gameDir);
 
             StatusChanged?.Invoke(localization.Get("status.applying_patch"));
             
             ProgressChanged?.Invoke(-1);
+
+            var arguments = $"apply --staging-dir \"{stagingDir}\" \"{pwrPath}\" \"{gameDir}\"";
+            
+            // Логируем команду
+            var logPath = Path.Combine(_launcherDir, "butler.log");
+            File.AppendAllText(logPath, $"\n[{DateTime.Now}] Running: {butlerPath} {arguments}\n");
 
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = butlerPath,
-                    Arguments = $"apply --staging-dir \"{stagingDir}\" \"{pwrPath}\" \"{gameDir}\"",
+                    Arguments = arguments,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    WorkingDirectory = _launcherDir
                 }
             };
 
-            process.Start();
+            var stdout = new System.Text.StringBuilder();
+            var stderr = new System.Text.StringBuilder();
             
-            await process.StandardOutput.ReadToEndAsync();
-            await process.StandardError.ReadToEndAsync();
+            process.OutputDataReceived += (s, e) => { if (e.Data != null) stdout.AppendLine(e.Data); };
+            process.ErrorDataReceived += (s, e) => { if (e.Data != null) stderr.AppendLine(e.Data); };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
 
             var completed = await Task.Run(() => process.WaitForExit(600000));
+            
+            // Логируем результат
+            File.AppendAllText(logPath, $"Exit code: {process.ExitCode}\n");
+            File.AppendAllText(logPath, $"Stdout: {stdout}\n");
+            File.AppendAllText(logPath, $"Stderr: {stderr}\n");
             
             if (!completed)
             {
                 process.Kill();
-                throw new Exception("Butler timeout");
+                throw new Exception("Butler timeout (10 min)");
             }
 
             if (process.ExitCode != 0)
             {
-                throw new Exception($"Butler error (code {process.ExitCode})");
+                var errorMsg = stderr.ToString().Trim();
+                if (string.IsNullOrEmpty(errorMsg))
+                    errorMsg = stdout.ToString().Trim();
+                if (string.IsNullOrEmpty(errorMsg))
+                    errorMsg = "Unknown error";
+                    
+                throw new Exception($"Butler error (code {process.ExitCode}): {errorMsg}");
             }
 
             if (Directory.Exists(stagingDir))

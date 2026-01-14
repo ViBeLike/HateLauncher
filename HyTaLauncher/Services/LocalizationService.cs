@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -18,10 +19,29 @@ namespace HyTaLauncher.Services
             Directory.CreateDirectory(_langDir);
             
             CreateDefaultLanguages();
-            LoadLanguage("en");
+            
+            // Определяем язык по умолчанию от системы Windows
+            var defaultLang = GetSystemLanguage();
+            LoadLanguage(defaultLang);
         }
 
         public string CurrentLanguage => _currentLanguage;
+
+        private string GetSystemLanguage()
+        {
+            var culture = CultureInfo.CurrentUICulture;
+            var langCode = culture.TwoLetterISOLanguageName.ToLower();
+            
+            // Проверяем, есть ли такой язык в доступных
+            var langFile = Path.Combine(_langDir, $"{langCode}.json");
+            if (File.Exists(langFile))
+            {
+                return langCode;
+            }
+            
+            // Fallback на английский
+            return "en";
+        }
 
         public List<string> GetAvailableLanguages()
         {
@@ -117,9 +137,9 @@ namespace HyTaLauncher.Services
                 ["main.branch"] = "BRANCH",
                 ["main.play"] = "PLAY",
                 ["main.settings"] = "⚙ Settings",
-                ["main.mods"] = "🧩 Mods",
+                ["main.mods"] = "Mods",
                 ["main.preparing"] = "Preparing...",
-                ["main.footer"] = "HyTaLauncher v1.0.0 • Unofficial launcher",
+                ["main.footer"] = "HyTaLauncher v1.0.2 • Unofficial launcher",
                 ["main.disclaimer"] = "This is a non-commercial fan project. After trying the game, please purchase it at",
                 ["main.versions_found"] = "Versions found: {0}",
                 ["main.latest"] = "Latest (latest)",
@@ -138,12 +158,19 @@ namespace HyTaLauncher.Services
                 ["status.extracting_java"] = "Extracting Java...",
                 ["status.system_java"] = "Using system Java",
                 ["status.game_installed"] = "Game already installed",
+                ["status.update_available"] = "Update available, downloading...",
+                ["status.updating"] = "Updating to {0}...",
                 ["status.pwr_cached"] = "PWR file already downloaded",
+                ["status.redownloading"] = "File corrupted, re-downloading...",
                 ["status.downloading"] = "Downloading {0}...",
+                ["status.downloading_patch"] = "Downloading patch {0} -> {1}...",
                 ["status.installing"] = "Installing game...",
                 ["status.downloading_butler"] = "Downloading Butler...",
                 ["status.extracting_butler"] = "Extracting Butler...",
                 ["status.applying_patch"] = "Applying patch...",
+                ["status.downloading_base"] = "Downloading base version {0}...",
+                ["status.installing_base"] = "Installing base version...",
+                ["status.applying_patch_version"] = "Applying patch {0}...",
                 ["status.game_installed_done"] = "Game installed!",
                 ["status.checking_versions"] = "Checking available versions...",
                 
@@ -151,13 +178,24 @@ namespace HyTaLauncher.Services
                 ["settings.game_folder"] = "GAME FOLDER",
                 ["settings.api_key"] = "CURSEFORGE API KEY",
                 ["settings.api_key_hint"] = "Get your API key at console.curseforge.com",
-                ["settings.info"] = "HyTaLauncher v1.0.0",
+                ["settings.info"] = "HyTaLauncher v1.0.2",
                 ["settings.info_desc"] = "Unofficial launcher for Hytale",
                 ["settings.cancel"] = "Cancel",
                 ["settings.save"] = "Save",
                 ["settings.saved"] = "Settings saved!",
                 ["settings.success"] = "Success",
                 ["settings.select_folder"] = "Select game folder",
+                ["settings.mirror"] = "DOWNLOAD MIRROR",
+                ["settings.use_mirror"] = "Use mirror server (if official doesn't work)",
+                ["settings.mirror_warning"] = "Only use if official server doesn't work! Speed limited to ~2 MB/s",
+                ["settings.mirror_confirm"] = "Warning!\n\nUse mirror ONLY if you cannot download from official servers.\n\nMirror limitations:\n- Speed limited to ~2 MB/s\n- May not have latest versions\n\nTry official server first!",
+                ["settings.russifier"] = "RUSSIFIER",
+                ["settings.install_russifier"] = "Install Russifier",
+                ["settings.russifier_no_game"] = "Game not installed",
+                ["settings.russifier_downloading"] = "Downloading...",
+                ["settings.russifier_installing"] = "Installing...",
+                ["settings.russifier_done"] = "Russifier installed for {0} version(s)!",
+                ["settings.russifier_error"] = "Error",
                 
                 ["update.available"] = "Update available!",
                 ["update.message"] = "New version {0} is available.\nCurrent version: {1}\n\nOpen download page?",
@@ -175,7 +213,13 @@ namespace HyTaLauncher.Services
                 ["mods.delete_title"] = "Delete mod",
                 ["mods.deleted"] = "Mod \"{0}\" deleted",
                 ["mods.no_api_key"] = "CurseForge API key not set. Add it in Settings.",
-                ["mods.search_placeholder"] = "Search mods..."
+                ["mods.search_placeholder"] = "Search mods...",
+                ["mods.checking_updates"] = "Checking for updates...",
+                ["mods.updates_available"] = "{0} updates available",
+                ["mods.no_updates"] = "All mods are up to date",
+                ["mods.updating"] = "Updating {0}...",
+                ["mods.updated"] = "{0} updated!",
+                ["mods.update_failed"] = "Update failed"
             };
         }
 
@@ -190,9 +234,9 @@ namespace HyTaLauncher.Services
                 ["main.branch"] = "ВЕТКА",
                 ["main.play"] = "ИГРАТЬ",
                 ["main.settings"] = "⚙ Настройки",
-                ["main.mods"] = "🧩 Моды",
+                ["main.mods"] = "Моды",
                 ["main.preparing"] = "Подготовка...",
-                ["main.footer"] = "HyTaLauncher v1.0.0 • Неофициальный лаунчер",
+                ["main.footer"] = "HyTaLauncher v1.0.2 • Неофициальный лаунчер",
                 ["main.disclaimer"] = "Это некоммерческий фан-проект. После ознакомления приобретите игру на",
                 ["main.versions_found"] = "Найдено версий: {0}",
                 ["main.latest"] = "Последняя (latest)",
@@ -211,12 +255,19 @@ namespace HyTaLauncher.Services
                 ["status.extracting_java"] = "Распаковка Java...",
                 ["status.system_java"] = "Используется системная Java",
                 ["status.game_installed"] = "Игра уже установлена",
+                ["status.update_available"] = "Доступно обновление, загрузка...",
+                ["status.updating"] = "Обновление до {0}...",
                 ["status.pwr_cached"] = "PWR файл уже скачан",
+                ["status.redownloading"] = "Файл повреждён, перекачиваем...",
                 ["status.downloading"] = "Загрузка {0}...",
+                ["status.downloading_patch"] = "Загрузка патча {0} -> {1}...",
                 ["status.installing"] = "Установка игры...",
                 ["status.downloading_butler"] = "Загрузка Butler...",
                 ["status.extracting_butler"] = "Распаковка Butler...",
                 ["status.applying_patch"] = "Применение патча...",
+                ["status.downloading_base"] = "Загрузка базовой версии {0}...",
+                ["status.installing_base"] = "Установка базовой версии...",
+                ["status.applying_patch_version"] = "Применение патча {0}...",
                 ["status.game_installed_done"] = "Игра установлена!",
                 ["status.checking_versions"] = "Проверка доступных версий...",
                 
@@ -224,13 +275,24 @@ namespace HyTaLauncher.Services
                 ["settings.game_folder"] = "ПАПКА ИГРЫ",
                 ["settings.api_key"] = "CURSEFORGE API КЛЮЧ",
                 ["settings.api_key_hint"] = "Получите API ключ на console.curseforge.com",
-                ["settings.info"] = "HyTaLauncher v1.0.0",
+                ["settings.info"] = "HyTaLauncher v1.0.2",
                 ["settings.info_desc"] = "Неофициальный лаунчер для Hytale",
                 ["settings.cancel"] = "Отмена",
                 ["settings.save"] = "Сохранить",
                 ["settings.saved"] = "Настройки сохранены!",
                 ["settings.success"] = "Успех",
                 ["settings.select_folder"] = "Выберите папку для игры",
+                ["settings.mirror"] = "ЗЕРКАЛО ЗАГРУЗКИ",
+                ["settings.use_mirror"] = "Использовать зеркало (если официальный не работает)",
+                ["settings.mirror_warning"] = "Используйте только если официальный сервер не работает! Скорость ограничена ~2 МБ/с",
+                ["settings.mirror_confirm"] = "Внимание!\n\nИспользуйте зеркало ТОЛЬКО если не можете скачать с официальных серверов.\n\nОграничения зеркала:\n- Скорость ограничена ~2 МБ/с\n- Может не иметь последних версий\n\nСначала попробуйте официальный сервер!",
+                ["settings.russifier"] = "РУСИФИКАТОР",
+                ["settings.install_russifier"] = "Установить русификатор",
+                ["settings.russifier_no_game"] = "Игра не установлена",
+                ["settings.russifier_downloading"] = "Скачивание...",
+                ["settings.russifier_installing"] = "Установка...",
+                ["settings.russifier_done"] = "Русификатор установлен для {0} версий!",
+                ["settings.russifier_error"] = "Ошибка",
                 
                 ["update.available"] = "Доступно обновление!",
                 ["update.message"] = "Доступна новая версия {0}.\nТекущая версия: {1}\n\nОткрыть страницу загрузки?",
@@ -248,7 +310,13 @@ namespace HyTaLauncher.Services
                 ["mods.delete_title"] = "Удаление мода",
                 ["mods.deleted"] = "Мод \"{0}\" удалён",
                 ["mods.no_api_key"] = "API ключ CurseForge не указан. Добавьте его в Настройках.",
-                ["mods.search_placeholder"] = "Поиск модов..."
+                ["mods.search_placeholder"] = "Поиск модов...",
+                ["mods.checking_updates"] = "Проверка обновлений...",
+                ["mods.updates_available"] = "Доступно обновлений: {0}",
+                ["mods.no_updates"] = "Все моды актуальны",
+                ["mods.updating"] = "Обновление {0}...",
+                ["mods.updated"] = "{0} обновлён!",
+                ["mods.update_failed"] = "Ошибка обновления"
             };
         }
     }
