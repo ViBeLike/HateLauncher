@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
@@ -11,7 +12,10 @@ namespace HyTaLauncher.Services
         public string Name { get; set; } = "";
         public string PwrFile { get; set; } = "";
         public string Branch { get; set; } = "release";
+        public int PrevVersion { get; set; } = 0;  // Предыдущая версия (0 = полная установка)
+        public int Version { get; set; } = 0;      // Целевая версия
         public bool IsLatest { get; set; } = false;
+        public bool IsFullInstall => PrevVersion == 0; // 0/X.pwr = полная версия
         
         public override string ToString() => Name;
     }
@@ -24,7 +28,13 @@ namespace HyTaLauncher.Services
         private readonly HttpClient _httpClient;
         private readonly string _launcherDir;  // Папка лаунчера: %AppData%\HyTaLauncher
         private readonly string _gameDir;      // Папка игры: %AppData%\Hytale
-        private const int MaxPwrCheck = 20;
+        private const int ConsecutiveMissesToStop = 5; // Прекращаем поиск после 5 подряд отсутствующих версий
+        
+        // Доступные ветки
+        public static readonly string[] AvailableBranches = { "release", "pre-release", "beta", "alpha" };
+        
+        // Кэш всех найденных PWR файлов: branch -> (prevVer, targetVer) -> exists
+        private Dictionary<string, HashSet<(int prev, int target)>> _pwrCache = new();
 
         public GameLauncher()
         {
@@ -44,13 +54,18 @@ namespace HyTaLauncher.Services
         public async Task<List<GameVersion>> GetAvailableVersionsAsync(string branch, LocalizationService localization)
         {
             var versions = new List<GameVersion>();
+            var pwrSet = new HashSet<(int prev, int target)>();
             
             StatusChanged?.Invoke(localization.Get("status.checking_versions"));
 
-            for (int i = 1; i <= MaxPwrCheck; i++)
+            int maxVersion = 0;
+            int consecutiveMisses = 0;
+            int ver = 1;
+            
+            // Ищем полные версии (0/X.pwr) пока не будет 5 подряд отсутствующих
+            while (consecutiveMisses < ConsecutiveMissesToStop)
             {
-                var pwrFile = $"{i}.pwr";
-                var url = $"https://game-patches.hytale.com/patches/windows/amd64/{branch}/0/{pwrFile}";
+                var url = $"https://game-patches.hytale.com/patches/windows/amd64/{branch}/0/{ver}.pwr";
                 
                 try
                 {
@@ -59,32 +74,80 @@ namespace HyTaLauncher.Services
                     
                     if (response.IsSuccessStatusCode)
                     {
-                        versions.Add(new GameVersion
-                        {
-                            Name = string.Format(localization.Get("main.version_num"), i),
-                            PwrFile = pwrFile,
-                            Branch = branch
-                        });
-                        
-                        var progress = (double)i / MaxPwrCheck * 100;
-                        ProgressChanged?.Invoke(progress);
+                        maxVersion = ver;
+                        pwrSet.Add((0, ver));
+                        consecutiveMisses = 0;
                     }
                     else
                     {
-                        break;
+                        consecutiveMisses++;
                     }
                 }
-                catch (TaskCanceledException)
+                catch
                 {
-                    break;
+                    consecutiveMisses++;
                 }
-                catch (HttpRequestException)
-                {
-                    continue;
-                }
+                
+                ProgressChanged?.Invoke(Math.Min(ver * 5, 50));
+                ver++;
             }
 
+            // Ищем инкрементальные патчи (X/Y.pwr где X < Y)
+            for (int prevVer = 1; prevVer < maxVersion; prevVer++)
+            {
+                consecutiveMisses = 0;
+                int targetVer = prevVer + 1;
+                
+                while (consecutiveMisses < ConsecutiveMissesToStop && targetVer <= maxVersion + ConsecutiveMissesToStop)
+                {
+                    var url = $"https://game-patches.hytale.com/patches/windows/amd64/{branch}/{prevVer}/{targetVer}.pwr";
+                    
+                    try
+                    {
+                        using var request = new HttpRequestMessage(HttpMethod.Head, url);
+                        using var response = await _httpClient.SendAsync(request);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            pwrSet.Add((prevVer, targetVer));
+                            consecutiveMisses = 0;
+                        }
+                        else
+                        {
+                            consecutiveMisses++;
+                        }
+                    }
+                    catch
+                    {
+                        consecutiveMisses++;
+                    }
+                    
+                    targetVer++;
+                }
+                
+                var progress = 50 + (double)prevVer / Math.Max(maxVersion, 1) * 50;
+                ProgressChanged?.Invoke(Math.Min(progress, 100));
+            }
+
+            // Сохраняем кэш для использования при установке
+            _pwrCache[branch] = pwrSet;
+
             ProgressChanged?.Invoke(100);
+            
+            // Создаём список версий для UI (только целевые версии)
+            var targetVersions = pwrSet.Select(p => p.target).Distinct().OrderBy(v => v).ToList();
+            
+            foreach (var v in targetVersions)
+            {
+                versions.Add(new GameVersion
+                {
+                    Name = string.Format(localization.Get("main.version_num"), v),
+                    PwrFile = $"{v}.pwr",
+                    Branch = branch,
+                    PrevVersion = 0,
+                    Version = v
+                });
+            }
             
             if (versions.Count == 0)
             {
@@ -93,6 +156,8 @@ namespace HyTaLauncher.Services
                     Name = localization.Get("main.latest"),
                     PwrFile = "1.pwr",
                     Branch = branch,
+                    PrevVersion = 0,
+                    Version = 1,
                     IsLatest = true
                 });
             }
@@ -104,11 +169,24 @@ namespace HyTaLauncher.Services
                     Name = localization.Get("main.latest"),
                     PwrFile = latestVersion.PwrFile,
                     Branch = branch,
+                    PrevVersion = 0,
+                    Version = latestVersion.Version,
                     IsLatest = true
                 });
             }
 
             return versions;
+        }
+        
+        // Хранит все найденные версии для определения базы
+        private List<GameVersion> _allVersions = new();
+        
+        /// <summary>
+        /// Сохраняет версии для использования при установке
+        /// </summary>
+        public void SetVersionsCache(List<GameVersion> versions)
+        {
+            _allVersions = versions;
         }
 
         private void EnsureDirectories()
@@ -187,11 +265,21 @@ namespace HyTaLauncher.Services
 
         private async Task DownloadGameAsync(GameVersion version, LocalizationService localization)
         {
-            var folderName = version.IsLatest ? "latest" : version.PwrFile.Replace(".pwr", "");
-            var gameDir = Path.Combine(_gameDir, version.Branch, "package", "game", folderName);
+            var gameDir = Path.Combine(_gameDir, version.Branch, "package", "game", "latest");
             var clientPath = Path.Combine(gameDir, "Client", "HytaleClient.exe");
+            var versionFile = Path.Combine(gameDir, ".version");
 
-            if (File.Exists(clientPath))
+            // Читаем текущую установленную версию
+            int installedVersion = 0;
+            if (File.Exists(versionFile))
+            {
+                int.TryParse(File.ReadAllText(versionFile).Trim(), out installedVersion);
+            }
+
+            int targetVersion = version.Version;
+
+            // Если уже установлена нужная версия
+            if (installedVersion == targetVersion && File.Exists(clientPath))
             {
                 StatusChanged?.Invoke(localization.Get("status.game_installed"));
                 ProgressChanged?.Invoke(100);
@@ -199,24 +287,92 @@ namespace HyTaLauncher.Services
             }
 
             Directory.CreateDirectory(gameDir);
-            
             var cacheDir = Path.Combine(_launcherDir, "cache");
-            var pwrPath = Path.Combine(cacheDir, $"{version.Branch}_{version.PwrFile}");
 
-            if (!File.Exists(pwrPath))
+            // Получаем кэш PWR файлов для этой ветки
+            if (!_pwrCache.TryGetValue(version.Branch, out var pwrSet))
             {
-                StatusChanged?.Invoke(string.Format(localization.Get("status.downloading"), version.Name));
-                var pwrUrl = $"https://game-patches.hytale.com/patches/windows/amd64/{version.Branch}/0/{version.PwrFile}";
-                await DownloadFileAsync(pwrUrl, pwrPath);
-            }
-            else
-            {
-                StatusChanged?.Invoke(localization.Get("status.pwr_cached"));
-                ProgressChanged?.Invoke(100);
+                pwrSet = new HashSet<(int prev, int target)>();
             }
 
-            StatusChanged?.Invoke(localization.Get("status.installing"));
-            await ApplyPwrAsync(pwrPath, gameDir, localization);
+            // Определяем путь обновления
+            var updatePath = FindUpdatePath(installedVersion, targetVersion, pwrSet);
+
+            if (updatePath.Count == 0)
+            {
+                // Нет пути — качаем полную версию
+                updatePath.Add((0, targetVersion));
+            }
+
+            // Применяем патчи по порядку
+            foreach (var (prevVer, targetVer) in updatePath)
+            {
+                var pwrFile = $"{targetVer}.pwr";
+                var pwrPath = Path.Combine(cacheDir, $"{version.Branch}_{prevVer}_{pwrFile}");
+                var pwrUrl = $"https://game-patches.hytale.com/patches/windows/amd64/{version.Branch}/{prevVer}/{pwrFile}";
+
+                if (prevVer == 0)
+                {
+                    StatusChanged?.Invoke(string.Format(localization.Get("status.downloading"), $"v{targetVer}"));
+                }
+                else
+                {
+                    StatusChanged?.Invoke(string.Format(localization.Get("status.downloading_patch"), prevVer, targetVer));
+                }
+
+                if (!File.Exists(pwrPath))
+                {
+                    await DownloadFileAsync(pwrUrl, pwrPath);
+                }
+
+                StatusChanged?.Invoke(localization.Get("status.applying_patch"));
+                await ApplyPwrAsync(pwrPath, gameDir, localization);
+                
+                // Обновляем версию после каждого патча
+                File.WriteAllText(versionFile, targetVer.ToString());
+            }
+
+            StatusChanged?.Invoke(localization.Get("status.game_installed_done"));
+        }
+
+        /// <summary>
+        /// Находит оптимальный путь обновления от текущей версии до целевой
+        /// </summary>
+        private List<(int prev, int target)> FindUpdatePath(int fromVersion, int toVersion, HashSet<(int prev, int target)> available)
+        {
+            if (fromVersion >= toVersion)
+                return new List<(int, int)>();
+
+            // Пробуем найти прямой патч
+            if (available.Contains((fromVersion, toVersion)))
+            {
+                return new List<(int, int)> { (fromVersion, toVersion) };
+            }
+
+            // Если нет прямого патча, ищем цепочку
+            // Простой жадный алгоритм: ищем патч с максимальным шагом
+            var path = new List<(int prev, int target)>();
+            int currentVersion = fromVersion;
+
+            while (currentVersion < toVersion)
+            {
+                // Ищем патч от текущей версии с максимальным целевым значением <= toVersion
+                var bestPatch = available
+                    .Where(p => p.prev == currentVersion && p.target <= toVersion)
+                    .OrderByDescending(p => p.target)
+                    .FirstOrDefault();
+
+                if (bestPatch == default)
+                {
+                    // Нет патча — нужна полная установка
+                    return new List<(int, int)> { (0, toVersion) };
+                }
+
+                path.Add(bestPatch);
+                currentVersion = bestPatch.target;
+            }
+
+            return path;
         }
 
         private async Task DownloadFileAsync(string url, string destPath)
@@ -359,13 +515,12 @@ namespace HyTaLauncher.Services
 
         private void LaunchGame(string playerName, GameVersion version)
         {
-            var folderName = version.IsLatest ? "latest" : version.PwrFile.Replace(".pwr", "");
-            var gameDir = Path.Combine(_gameDir, version.Branch, "package", "game", folderName);
+            var gameDir = Path.Combine(_gameDir, version.Branch, "package", "game", "latest");
             var clientPath = Path.Combine(gameDir, "Client", "HytaleClient.exe");
             var javaExe = GetJavaPath();
 
             if (!File.Exists(clientPath))
-                throw new FileNotFoundException("Клиент игры не найден");
+                throw new FileNotFoundException("Game client not found");
 
             var uuid = Guid.NewGuid().ToString();
 
