@@ -212,6 +212,7 @@
                                       SelectionChanged="BranchComboBox_SelectionChanged"
                                       Margin="0,0,0,20">
                                 <ComboBoxItem Content="release"/>
+                                <ComboBoxItem Content="pre-release"/>
                                 <ComboBoxItem Content="beta"/>
                                 <ComboBoxItem Content="alpha"/>
                             </ComboBox>

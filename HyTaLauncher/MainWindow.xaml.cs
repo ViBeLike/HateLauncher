@@ -142,6 +142,9 @@ namespace HyTaLauncher
                 var branch = GetSelectedBranch();
                 _versions = await _gameLauncher.GetAvailableVersionsAsync(branch, _localization);
                 
+                // Сохраняем версии для определения базы при установке
+                _gameLauncher.SetVersionsCache(_versions);
+                
                 VersionComboBox.ItemsSource = _versions;
                 if (_versions.Count > 0)
                 {
@@ -169,8 +172,9 @@ namespace HyTaLauncher
             return BranchComboBox.SelectedIndex switch
             {
                 0 => "release",
-                1 => "beta",
-                2 => "alpha",
+                1 => "pre-release",
+                2 => "beta",
+                3 => "alpha",
                 _ => "release"
             };
         }
