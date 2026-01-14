@@ -50,12 +50,12 @@ jobs:
         name: HyTaLauncher-Portable
         path: HyTaLauncher_Portable_*.zip
     
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: HyTaLauncher_Portable_*.zip
-        draft: true
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Create Release
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   uses: softprops/action-gh-release@v1
+    #   with:
+    #     files: HyTaLauncher_Portable_*.zip
+    #     draft: true
+    #     prerelease: false
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
