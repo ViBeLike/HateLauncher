@@ -26,7 +26,7 @@
 
 ---
 
-<summary><strong>TODO — План работ / Roadmap</strong></summary>
+## TODO — План работ / Roadmap
 
 - [ ] **Дополнительное зеркало для скачивания файлов**
 - [ ] **Автоустановка руссификатора**
@@ -159,6 +159,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) before contributing.
 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 
 
