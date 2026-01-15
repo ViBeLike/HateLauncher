@@ -32,7 +32,7 @@
 
 - [x] **Дополнительное зеркало для скачивания файлов**
 - [x] **Автоустановка руссификатора**
-- [x] **Автоустановка онлайн-фикса**
+- [x] **Автоустановка онлайн-фикса** (Он ломает некоторые текстуры в интерфесах)
 - [x] **Запуск локального сервера для игры с друзьями**
 - [ ] **Установка модов на сервер**
 - [ ] **Поддержка Linux**
@@ -164,6 +164,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) before contributing.
 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 
 
