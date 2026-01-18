@@ -7,7 +7,7 @@
 ---
 
 <a name="english"></a>
-## 🇬🇧 English
+## English
 
 ### Prerequisites
 
@@ -138,7 +138,7 @@ For development, create a `.env` file in the project root or set environment var
 ---
 
 <a name="russian"></a>
-## 🇷🇺 Русский
+## Русский
 
 ### Требования
 
@@ -269,5 +269,6 @@ HyTaLauncher/
 ---
 
 ## License / Лицензия
+
 
 MIT License - свободно используйте, модифицируйте и распространяйте.
