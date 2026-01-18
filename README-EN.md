@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">🇷🇺 Русский</a>
+  <a href="README.md">Русский</a>
 </p>
 
 ---
@@ -207,3 +207,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HyTaLauncher&type=date&legend=top-left" />
  </picture>
 </a>
+
