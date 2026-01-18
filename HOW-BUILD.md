@@ -1,7 +1,7 @@
 # How to Build HyTaLauncher / Как собрать HyTaLauncher
 
 <p align="center">
-  <a href="#english">🇬🇧 English</a> | <a href="#russian">🇷🇺 Русский</a>
+  <a href="#english">English</a> | <a href="#russian">Русский</a>
 </p>
 
 ---
@@ -272,3 +272,4 @@ HyTaLauncher/
 
 
 MIT License - свободно используйте, модифицируйте и распространяйте.
+
