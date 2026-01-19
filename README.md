@@ -5,7 +5,7 @@
 <p align="center">С поддержкой модов | Мод менеджер и модпаки<br>Установка русификатора и онлайн фикса из лаунчера!</p>
 
 <p align="center">
-  <img src="HateLauncher/Resources/icon.ico" alt="HateLauncher" width="128"/>
+  <img src="HyTaLauncher/Resources/icon.ico" alt="HateLauncher" width="128"/>
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MerryJoyKey-Studio/HateLauncher/releases"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/MerryJoyKey-Studio/HateLauncher/total"></a>
+  <a href="https://github.com/ViBeLike/HateLauncher/releases"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/ViBeLike/HateLauncher/total"></a>
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/Framework-.NET%208-purple?style=flat-square"/>
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
@@ -204,13 +204,14 @@ HateLauncher включает интеграцию с CurseForge для упра
 
 ## История звёзд
 
-<a href="https://www.star-history.com/#MerryJoyKey-Studio/HateLauncher&type=date&legend=top-left">
+<a href="https://www.star-history.com/#ViBeLike/HateLauncher&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HateLauncher&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HateLauncher&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HateLauncher&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ViBeLike/HateLauncher&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ViBeLike/HateLauncher&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ViBeLike/HateLauncher&type=date&legend=top-left" />
  </picture>
 </a>
+
 
 
 
