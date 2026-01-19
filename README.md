@@ -39,6 +39,9 @@
 
 ---
 
+## Уведомление о безопасности
+Для неподписанных двоичных файлов ожидаются **ложные** срабатывания антивируса. HyTaLauncher имеет открытый исходный код и безопасен.
+
 ## Возможности
 
 - Автоматическая загрузка и установка файлов игры
@@ -208,5 +211,6 @@ HyTaLauncher включает интеграцию с CurseForge для упра
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HyTaLauncher&type=date&legend=top-left" />
  </picture>
 </a>
+
 
 
