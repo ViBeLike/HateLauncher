@@ -13,11 +13,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ViBeLike/HateLauncher/releases"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/ViBeLike/HateLauncher/total"></a>
+  <!-- <a href="https://github.com/ViBeLike/HateLauncher/releases"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/ViBeLike/HateLauncher/total"></a> -->
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/Framework-.NET%208-purple?style=flat-square"/>
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
-  <a href="https://discord.gg/Hwtew6UfQw"><img alt="Static Badge" src="https://img.shields.io/badge/Discord-Link-blue?style=flat-square&logo=discord"></a>
+  <!-- <a href="https://discord.gg/Hwtew6UfQw"><img alt="Static Badge" src="https://img.shields.io/badge/Discord-Link-blue?style=flat-square&logo=discord"></a> -->
 </p>
 
 <h2 align="center">
@@ -211,6 +211,7 @@ HateLauncher включает интеграцию с CurseForge для упра
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ViBeLike/HateLauncher&type=date&legend=top-left" />
  </picture>
 </a>
+
 
 
 
