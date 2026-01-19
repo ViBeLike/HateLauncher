@@ -1,11 +1,11 @@
-# HyTaLauncher - Лаунчер для Hytale | Hytale Launcher
+# HateLauncher - Лаунчер для Hytale | Hytale Launcher
 
 <p align="center">Для бесплатной игры</p>
 
 <p align="center">С поддержкой модов | Мод менеджер и модпаки<br>Установка русификатора и онлайн фикса из лаунчера!</p>
 
 <p align="center">
-  <img src="HyTaLauncher/Resources/icon.ico" alt="HyTaLauncher" width="128"/>
+  <img src="HateLauncher/Resources/icon.ico" alt="HateLauncher" width="128"/>
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MerryJoyKey-Studio/HyTaLauncher/releases"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/MerryJoyKey-Studio/HyTaLauncher/total"></a>
+  <a href="https://github.com/MerryJoyKey-Studio/HateLauncher/releases"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/MerryJoyKey-Studio/HateLauncher/total"></a>
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/Framework-.NET%208-purple?style=flat-square"/>
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
@@ -40,7 +40,7 @@
 ---
 
 ## Уведомление о безопасности
-Для неподписанных двоичных файлов ожидаются **ложные** срабатывания антивируса. HyTaLauncher имеет открытый исходный код и безопасен.
+Для неподписанных двоичных файлов ожидаются **ложные** срабатывания антивируса. HateLauncher имеет открытый исходный код и безопасен.
 
 ## Возможности
 
@@ -67,25 +67,25 @@
 
 | Файл | Описание |
 |------|----------|
-| `HyTaLauncher_Setup_x.x.x.exe` | Установщик (рекомендуется) |
-| `HyTaLauncher_Portable_x.x.x.zip` | Портативная версия (без установки) |
+| `HateLauncher_Setup_x.x.x.exe` | Установщик (рекомендуется) |
+| `HateLauncher_Portable_x.x.x.zip` | Портативная версия (без установки) |
 
 ---
 
 ### Установщик
 
-1. Скачайте `HyTaLauncher_Setup_x.x.x.exe` со страницы Releases
+1. Скачайте `HateLauncher_Setup_x.x.x.exe` со страницы Releases
 2. Запустите установщик
-3. Запустите HyTaLauncher с рабочего стола или из меню Пуск
+3. Запустите HateLauncher с рабочего стола или из меню Пуск
 4. Введите никнейм и нажмите Играть!
 
 ---
 
 ### Портативная версия
 
-1. Скачайте `HyTaLauncher_Portable_x.x.x.zip` со страницы Releases
+1. Скачайте `HateLauncher_Portable_x.x.x.zip` со страницы Releases
 2. Распакуйте в любую папку
-3. Запустите `HyTaLauncher.exe`
+3. Запустите `HateLauncher.exe`
 
 ---
 
@@ -102,7 +102,7 @@
 
 ## Моды
 
-HyTaLauncher включает интеграцию с CurseForge для управления модами Hytale:
+HateLauncher включает интеграцию с CurseForge для управления модами Hytale:
 
 - Просмотр популярных модов
 - Поиск по названию
@@ -204,13 +204,14 @@ HyTaLauncher включает интеграцию с CurseForge для упра
 
 ## История звёзд
 
-<a href="https://www.star-history.com/#MerryJoyKey-Studio/HyTaLauncher&type=date&legend=top-left">
+<a href="https://www.star-history.com/#MerryJoyKey-Studio/HateLauncher&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HyTaLauncher&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HyTaLauncher&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HyTaLauncher&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HateLauncher&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HateLauncher&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MerryJoyKey-Studio/HateLauncher&type=date&legend=top-left" />
  </picture>
 </a>
+
 
 
 
